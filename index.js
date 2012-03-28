@@ -12,7 +12,7 @@ require('fs').watch(configFile, function() {
 require('proxy').createServer(function(url) {
     for (var i = 0; i < rewrites.length; i++) {
         if (rewrites[i].pattern.test(url)) {
-            return url.replace(rewrites[i].pattern, rewrites[i].replacement);
+            return rewrites[i].replacement ? url.replace(rewrites[i].pattern, rewrites[i].replacement) : '';
         }
     }
     return url;
