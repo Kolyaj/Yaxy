@@ -1,1 +1,3 @@
-require('proxy').createServer().listen(8558);
+require('proxy').createServer(function(url) {
+    return url;
+}).listen(8678);
