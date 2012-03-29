@@ -17,7 +17,16 @@ process.on('uncaughtException', function(err) {
 require('proxy').createServer(function(url) {
     for (var i = 0; i < rewrites.length; i++) {
         if (rewrites[i].pattern.test(url)) {
-            return rewrites[i].replacement ? url.replace(rewrites[i].pattern, rewrites[i].replacement) : '';
+            var replacement = rewrites[i].replacement;
+            if (replacement) {
+                if (replacement.indexOf('data:') == 0) {
+                    return replacement;
+                } else {
+                    return url.replace(rewrites[i].pattern, replacement);
+                }
+            } else {
+                return '';
+            }
         }
     }
     return url;
