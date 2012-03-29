@@ -1,4 +1,4 @@
-var port = 8678;
+var port = 8558;
 var configFile = 'config.txt';
 
 var rewrites = [];
