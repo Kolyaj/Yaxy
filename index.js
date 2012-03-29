@@ -9,6 +9,11 @@ require('fs').watch(configFile, function() {
 });
 
 
+process.on('uncaughtException', function(err) {
+    console.log('Uncaught exception: ' + err.message);
+});
+
+
 require('proxy').createServer(function(url) {
     for (var i = 0; i < rewrites.length; i++) {
         if (rewrites[i].pattern.test(url)) {
