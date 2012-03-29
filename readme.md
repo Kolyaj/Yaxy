@@ -37,6 +37,10 @@ index-файл для директорий -- index.html. Для приведё�
 
 В этом случае на все урлы, начинающиеся на `host.com/some/path` будет ответ `<script type="text/javascript">alert('Привет!');</script>`.
 
+    host.com/some/path/png => data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD///+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4Ug9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC
+
+На урлы, начинающиеся на `host.com/some/path/png` отвечаем картинкой.
+
 
 ## Как начать использовать
 
