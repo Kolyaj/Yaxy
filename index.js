@@ -23,7 +23,9 @@ require('proxy').createServer(function(url) {
             };
             var replacement = rewrites[i].replacement;
             if (replacement) {
-                if (replacement.indexOf('data:') == 0) {
+                if (replacement == '$') {
+                    result.url = url;
+                } else if (replacement.indexOf('data:') == 0) {
                     result.url = replacement;
                 } else {
                     result.url = url.replace(rewrites[i].pattern, replacement);
