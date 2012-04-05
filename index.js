@@ -17,19 +17,25 @@ process.on('uncaughtException', function(err) {
 require('proxy').createServer(function(url) {
     for (var i = 0; i < rewrites.length; i++) {
         if (rewrites[i].pattern.test(url)) {
+            var result = {
+                url: '',
+                modifiers: rewrites[i].modifiers
+            };
             var replacement = rewrites[i].replacement;
             if (replacement) {
                 if (replacement.indexOf('data:') == 0) {
-                    return replacement;
+                    result.url = replacement;
                 } else {
-                    return url.replace(rewrites[i].pattern, replacement);
+                    result.url = url.replace(rewrites[i].pattern, replacement);
                 }
-            } else {
-                return '';
             }
+            return result;
         }
     }
-    return url;
+    return {
+        url: url,
+        modifiers: []
+    };
 }).listen(port);
 
 
