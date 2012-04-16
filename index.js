@@ -1,5 +1,10 @@
-var port = 8558;
-var configFile = 'config.txt';
+var options = require('argv-parser').parse({
+    p: 8558,
+    c: 'config.txt'
+});
+
+var port = +options.p;
+var configFile = options.c;
 
 var rewrites = [];
 parseConfig(configFile);
