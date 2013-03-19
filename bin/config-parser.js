@@ -75,8 +75,7 @@ function createAction(pattern, replacement) {
     }
     if (replacement.match(/^data:(?:([a-zA-Z/-]+);)?(base64,)?(.*)/)) {
         var dataContentType = RegExp.$1 || 'text/plain';
-        var dataContent = new Buffer();
-        dataContent = new Buffer(RegExp.$3 || '', RegExp.$2 ? 'base64' : 'utf8');
+        var dataContent = new Buffer(RegExp.$3 || '', RegExp.$2 ? 'base64' : 'utf8');
         return function(state) {
             state.setResponseType(dataContentType);
             state.send(dataContent);
