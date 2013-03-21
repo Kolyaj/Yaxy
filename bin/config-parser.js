@@ -51,9 +51,13 @@ exports.parse = function(fname, callback) {
 };
 
 function createPattern(source) {
-    if (source.indexOf('/') == 0 && source.lastIndexOf('/') == source.length - 1) {
+    if (source[0] == '/' && source[source.length - 1] == '/') {
         return {
             url: new RegExp(source.substr(1, source.length - 2), 'i')
+        };
+    } else if (source[0] == '!') {
+        return {
+            url: source.slice(1).replace(/^(?!https?:\/\/)/, 'http://')
         };
     } else {
         return {
@@ -88,17 +92,22 @@ function createAction(pattern, replacement) {
             if (pattern.urlStart) {
                 fname = require('path').join(fname, url.slice(pattern.urlStart.length));
             } else if (pattern.url) {
-                fname = url.replace(pattern.url, fname);
+                if (typeof pattern.url == 'string') {
+                    fname = pattern.url;
+                } else {
+                    fname = url.replace(pattern.url, fname);
+                }
             }
             state.sendFile(fname);
         };
     }
     return function(state) {
         var url = state.getRequestUrl();
-        if (pattern.url) {
-            state.setRequestUrl(url.replace(pattern.url, replacement));
-        } else if (pattern.urlStart) {
-            state.setRequestUrl(replacement.replace(/^(?!https?:\/\/)/, 'http://') + url.slice(pattern.urlStart.length));
+        var patternUrl = pattern.url || pattern.urlStart;
+        if (typeof patternUrl == 'string') {
+            state.setRequestUrl(replacement.replace(/^(?!https?:\/\/)/, 'http://') + url.slice(patternUrl.length));
+        } else {
+            state.setRequestUrl(url.replace(patternUrl, replacement));
         }
         state.doRequest();
     };
