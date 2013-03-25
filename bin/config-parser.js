@@ -106,6 +106,7 @@ function createFileAction(pattern, fnameTemplate) {
     return function(state) {
         var url = state.getRequestUrl();
         var fname = typeof pattern == 'string' ? require('path').join(fnameTemplate, url.slice(pattern.length)) : applyTemplate(fnameTemplate, url.match(pattern));
+        fname = fname.split('?')[0];
         state.sendFile(fname);
     };
 }
