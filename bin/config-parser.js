@@ -136,9 +136,9 @@ function createModifier(command) {
     var args = command.split(/\s+/);
     var commandName = args.shift();
     var commandArg = args.join(' ');
-    if (/^(setRequestHeader|setResponseHeader|setQueryParam|setCookie)$/.test(commandName)) {
+    if (/^(SetRequestHeader|SetResponseHeader|SetQueryParam|SetCookie)$/.test(commandName)) {
         var argsSeparator = ':';
-        if (commandName == 'setQueryParam' || commandName == 'setCookie') {
+        if (commandName == 'SetQueryParam' || commandName == 'SetCookie') {
             argsSeparator = '=';
         }
         var setArgs = commandArg.split(argsSeparator);
@@ -148,12 +148,12 @@ function createModifier(command) {
             state[commandName](setArgName, setArgValue);
         };
     }
-    if (/^(removeRequestHeader|removeResponseHeader|removeQueryParam|removeCookie)$/.test(commandName)) {
+    if (/^(RemoveRequestHeader|RemoveResponseHeader|RemoveQueryParam|RemoveCookie)$/.test(commandName)) {
         return function(state) {
             state[commandName](commandArg);
         };
     }
-    if (commandName == 'setStatusCode') {
+    if (commandName == 'SetStatusCode') {
         var statusCode = +commandArg;
         if (statusCode) {
             return function(state) {
