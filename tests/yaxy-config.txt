@@ -1,0 +1,3 @@
+$SetResponseHeader Origin: http://yaxy-tests
+
+yaxy-tests => file://c:/my/development/projects/yaxy/tests

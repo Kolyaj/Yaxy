@@ -135,6 +135,7 @@ function applyTemplate(tpl, args) {
 function createModifier(command) {
     var args = command.split(/\s+/);
     var commandName = args.shift();
+    var methodName = commandName[0].toLowerCase() + commandName.slice(1);
     var commandArg = args.join(' ');
     if (/^(SetRequestHeader|SetResponseHeader|SetQueryParam|SetCookie)$/.test(commandName)) {
         var argsSeparator = ':';
@@ -145,12 +146,12 @@ function createModifier(command) {
         var setArgName = setArgs.shift().trim();
         var setArgValue = setArgs.join(argsSeparator).trim();
         return function(state) {
-            state[commandName](setArgName, setArgValue);
+            state[methodName](setArgName, setArgValue);
         };
     }
     if (/^(RemoveRequestHeader|RemoveResponseHeader|RemoveQueryParam|RemoveCookie)$/.test(commandName)) {
         return function(state) {
-            state[commandName](commandArg);
+            state[methodName](commandArg);
         };
     }
     if (commandName == 'SetStatusCode') {
