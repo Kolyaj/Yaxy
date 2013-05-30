@@ -51,7 +51,13 @@ function loadConfig() {
                     ruleModifers.forEach(function(modifier) {
                         modifier(state);
                     });
-                    rule.action(state);
+                    if (state.__requestDelay) {
+                        setTimeout(function() {
+                            rule.action(state);
+                        }, state.__requestDelay * 1000);
+                    } else {
+                        rule.action(state);
+                    }
                 };
                 server.bind(rule.pattern);
             });

@@ -154,11 +154,19 @@ function createModifier(command) {
             state[methodName](commandArg);
         };
     }
-    if (commandName == 'SetStatusCode') {
+    if (commandName == 'StatusCode') {
         var statusCode = +commandArg;
         if (statusCode) {
             return function(state) {
                 state.overwriteResponseStatus(statusCode);
+            };
+        }
+    }
+    if (commandName == 'Delay') {
+        var timeout = +commandArg;
+        if (timeout) {
+            return function(state) {
+                state.__requestDelay = timeout;
             };
         }
     }
