@@ -12,11 +12,11 @@ If you haven't installed NodeJS already, [then do it] (http://nodejs.org/), then
 
      yaxy - config my-yaxy-config.txt - port 9999
 
-If you do not specify `--config`, it searches yaxy-config.txt file in the current directory. The server will listen on port `8558`, if no `--port` specified.
+If you do not specify `--config`, Yaxy will look for yaxy-config.txt file in the current directory. The server will listen on port `8558`, if no `--port` specified.
 
 ## Configuration File Format
 
-The configuration file is read line by line. Blank lines, lines beginning with a `# 'and an unidentified format string are ignored.
+The configuration file is read line by line. Blank lines, lines beginning with `#` and unknown strings are ignored.
 
 Rules can be combined in sections. Start of the section is a line enclosed in square brackets, the contents of a line can be any.
 
@@ -28,7 +28,8 @@ Rules can be combined in sections. Start of the section is a line enclosed in sq
      [Section 2]
      # Rules for section #2
 
-If section name starts with `#`, then all rules of this section will be ignored.
+If a section name starts with `#`, then all rules of this section will be ignored.
+
     # Rules out of sections
 
     [#Section 1]
@@ -49,7 +50,7 @@ Rules are written like:
 Sometimes exact address match is required, i.e. you need to modify only site's main page, leaving the rest of it intact. For this specify `!` at the beginning of url, `http://` is still optional, but trailing slash(es) are a must for exact matching. E.g., replaceing Yandex main page:  `!www.yandex.ru/ => ...`.
 
 
-If first two cases are not enough, you may use regexp for left side, enclosed with `/`. So, if you'll nedd to modify all requests to .ru domain, use:  `/^http://[^/]+\.ru// => ...`. Please note, regexp uses whole url, including `http://`.
+If first two cases are not enough, you may use regexp for left side, enclosed with `/`. So, if you'll need to modify all requests to .ru domain, use:  `/^http://[^/]+\.ru// => ...`. Please note, regexp uses whole url, including `http://`.
 
 ### Simple url substitute
 
