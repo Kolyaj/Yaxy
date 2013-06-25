@@ -20,13 +20,13 @@ The configuration file is read line by line. Blank lines, lines beginning with `
 
 Rules can be combined in sections. Start of the section is a line enclosed in square brackets, the contents of a line can be any.
 
-     # Rules out of sections
+    # Rules out of sections
 
-     [Section 1]
-     # Rules for section #1
+    [Section 1]
+    # Rules for section #1
 
-     [Section 2]
-     # Rules for section #2
+    [Section 2]
+    # Rules for section #2
 
 If a section name starts with `#`, then all rules of this section will be ignored.
 
