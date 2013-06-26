@@ -8,11 +8,11 @@ Yaxy is a proxy-server for a web developer, it substitutes the required resource
 
 If you haven't installed NodeJS already, [then do it] (http://nodejs.org/), then
 
-     npm install-g yaxy
+     npm install -g yaxy
 
 ## Running
 
-     yaxy - config my-yaxy-config.txt - port 9999
+     yaxy --config my-yaxy-config.txt --port 9999
 
 If you do not specify `--config`, Yaxy will look for yaxy-config.txt file in the current directory. The server will listen on port `8558`, if no `--port` specified.
 
