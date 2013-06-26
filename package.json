@@ -1,12 +1,12 @@
 {
-    "author": {
-        "name": "Kolyaj",
-        "email": "kolyaj@yandex.ru",
-        "url": "https://github.com/Kolyaj"
-    },
+    "author": "Kolyaj <kolyaj@yandex.ru> (https://github.com/Kolyaj)",
+    "contributors": [
+        "Kolyaj <kolyaj@yandex.ru> (https://github.com/Kolyaj)",
+        "Chorry (https://github.com/chorry)"
+    ],
     "name": "yaxy",
-    "description": "Proxy server for web developers.",
-    "version": "0.1.1",
+    "description": "Proxy server for a web developers.",
+    "version": "0.1.2",
     "homepage": "https://github.com/Kolyaj/Yaxy",
     "repository": {
         "type": "git",
