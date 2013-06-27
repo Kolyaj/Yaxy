@@ -6,7 +6,7 @@
     ],
     "name": "yaxy",
     "description": "Proxy server for a web developers.",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "homepage": "https://github.com/Kolyaj/Yaxy",
     "repository": {
         "type": "git",
