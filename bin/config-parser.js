@@ -107,6 +107,7 @@ function createFileAction(pattern, fnameTemplate) {
         var url = state.getRequestUrl();
         var fname = typeof pattern == 'string' ? require('path').join(fnameTemplate, url.slice(pattern.length)) : applyTemplate(fnameTemplate, url.match(pattern));
         fname = fname.split('?')[0];
+        fname = fname.replace(/~/g, state.get('documentRoot', ''));
         state.sendFile(fname);
     };
 }
@@ -170,4 +171,14 @@ function createModifier(command) {
             };
         }
     }
+
+    if (commandName == 'SetDocumentRoot') {
+        var newDocumentRoot = commandArg;
+        return function(state) {
+            var oldDocumentRoot = state.get('documentRoot', '');
+            state.set('documentRoot', newDocumentRoot.replace(/~/g, oldDocumentRoot));
+        };
+    }
+
+    console.log('Unknown modifier ' + commandName);
 }
