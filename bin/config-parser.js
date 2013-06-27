@@ -166,7 +166,7 @@ function createModifier(command) {
         var timeout = +commandArg;
         if (timeout) {
             return function(state) {
-                state.__requestDelay = timeout;
+                state.set('delay', timeout);
             };
         }
     }

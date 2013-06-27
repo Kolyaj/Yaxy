@@ -51,10 +51,11 @@ function loadConfig() {
                     ruleModifers.forEach(function(modifier) {
                         modifier(state);
                     });
-                    if (state.__requestDelay) {
+                    var delay = state.get('delay', 0);
+                    if (delay) {
                         setTimeout(function() {
                             rule.action(state);
-                        }, state.__requestDelay * 1000);
+                        }, delay * 1000);
                     } else {
                         rule.action(state);
                     }
