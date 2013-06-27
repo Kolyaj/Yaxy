@@ -17,10 +17,10 @@ var port = args.port || 8558;
 var configFile = args.config || 'yaxy-config.txt';
 
 if (!require('fs').existsSync(configFile)) {
-    console.log('Не найден файл с конфигом ' + configFile);
-    console.log('Запуск: yaxy --port 8558 --config yaxy-config.txt');
-    console.log('    port по-умолчанию: 8558');
-    console.log('    config по-умолчанию: yaxy-config.txt в текущей директории');
+    console.log('Config file ' + configFile + ' not found');
+    console.log('Usage: yaxy --port 8558 --config yaxy-config.txt');
+    console.log('    default port: 8558');
+    console.log('    default config: ./yaxy-config.txt');
     process.exit();
 }
 
