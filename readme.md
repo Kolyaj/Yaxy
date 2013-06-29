@@ -138,6 +138,28 @@ Cookies are modified for server, so while browser sends an original cookie, serv
     # Removing response header
     $RemoveResponseHeader Content-Type
 
+### Setting root directory for `file://` protocol
+
+If all of your projects are located in one directory, you can set root directory one time, instead of doing it each time for every project.
+
+    $SetDocumentRoot /home/me/projects
+
+Now you can use this path with tilde (`~`)
+
+    site.my => file://~/site.my
+    # With the upper rule it is equal to
+    site => file:///home/me/projects/site.my
+
+Also you can set root directory for specific section of rules
+
+    $SetDocumentRoot /home/me/projects
+
+    [site.my]
+    $SetDocumentRoot ~/site.my
+    site.my/css => file://~/css-dev
+    site.my/js => file://~/js-dev
+    site.my => file://~    
+
 ### Modifying response status
 
     # Always HTTP 200 for response (even when it's not)

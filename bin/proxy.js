@@ -15,6 +15,16 @@ var args = (function(argv) {
 
 var port = args.port || 8558;
 var configFile = args.config || 'yaxy-config.txt';
+var proxy = !args.proxy ? null : (function(proxy) {
+    var proxyRegex = /^(?:([^:]*):([^@]*)@)?([^:]*):([0-9]*)$/;
+    var groups = proxyRegex.exec(proxy);
+    return {
+        user: groups[1],
+        password: groups[2],
+        host: groups[3],
+        port: parseInt(groups[4], 10)
+    }
+})(args.proxy);
 
 if (!require('fs').existsSync(configFile)) {
     console.log('Config file ' + configFile + ' not found');
@@ -28,7 +38,7 @@ process.on('uncaughtException', function(err) {
     console.error(err.stack);
 });
 
-var server = require('../lib/yaxy')(port);
+var server = require('../lib/yaxy')(port, proxy);
 
 loadConfig();
 require('fs').watch(configFile, loadConfig);
