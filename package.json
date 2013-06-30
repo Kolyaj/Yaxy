@@ -2,7 +2,8 @@
     "author": "Kolyaj <kolyaj@yandex.ru> (https://github.com/Kolyaj)",
     "contributors": [
         "Kolyaj <kolyaj@yandex.ru> (https://github.com/Kolyaj)",
-        "Chorry (https://github.com/chorry)"
+        "Chorry (https://github.com/chorry)",
+        "verkholantsev (https://github.com/verkholantsev)"
     ],
     "name": "yaxy",
     "description": "Proxy server for a web developers.",
