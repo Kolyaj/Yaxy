@@ -13,12 +13,24 @@ var args = (function(argv) {
     return res;
 })(process.argv);
 
-var port = args.port || 8558;
-var configFile = args.config || 'yaxy-config.txt';
+var port = args['port'] || 8558;
+var configFile = args['config'] || 'yaxy-config.txt';
+if (args['proxy']) {
+    var proxy = (function(proxy) {
+        var proxyRegex = /^(?:([^:]*):([^@]*)@)?([^:]*):([0-9]*)$/;
+        var groups = proxyRegex.exec(proxy);
+        return {
+            user: groups[1],
+            password: groups[2],
+            host: groups[3],
+            port: +groups[4]
+        }
+    })(args['proxy']);
+}
 
 if (!require('fs').existsSync(configFile)) {
     console.log('Config file ' + configFile + ' not found');
-    console.log('Usage: yaxy --port 8558 --config yaxy-config.txt');
+    console.log('Usage: yaxy --port 8558 --config yaxy-config.txt --proxy user:password@localhost:3333');
     console.log('    default port: 8558');
     console.log('    default config: ./yaxy-config.txt');
     process.exit();
@@ -29,6 +41,9 @@ process.on('uncaughtException', function(err) {
 });
 
 var server = require('../lib/yaxy')(port);
+if (proxy) {
+    server.setProxy(proxy);
+}
 
 loadConfig();
 require('fs').watch(configFile, loadConfig);
