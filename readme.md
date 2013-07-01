@@ -12,9 +12,9 @@ If you haven't installed NodeJS already, [then do it] (http://nodejs.org/), then
 
 ## Running
 
-     yaxy --config my-yaxy-config.txt --port 9999
+     yaxy --config my-yaxy-config.txt --port 9999 --proxy user:password@proxyhost:3000
 
-If you do not specify `--config`, Yaxy will look for yaxy-config.txt file in the current directory. The server will listen on port `8558`, if no `--port` specified.
+If you do not specify `--config`, Yaxy will look for yaxy-config.txt file in the current directory. The server will listen on port `8558`, if no `--port` specified. If you specify `--proxy`, Yaxy will route external requests through proxy server.
 
 ## Configuration File Format
 
@@ -87,6 +87,14 @@ Get an image for all urls, starting with `host.com/some/path/png`
 If you have a regexp in rule's left side, you may use it's captured groups in the right side.
 
     /^http://test.my/\?name=(.*)/ => data:text/html;<script>alert('Hello, $1!');</script>
+
+### Routing requests through proxy
+
+Beside the specifying `--proxy` on the start, Yaxy can route specific requests through other proxy.
+
+    www.yandex.ru => proxy:localhost:3000
+
+With this rule requests to Yandex will be routed through localhost proxy, that listens port number 3000. If Yaxy was started with `--proxy localhost:3333` arg, all requests will be routed through localhost default proxy (port 3333), but requests to Yandex will still use route through proxy on port number 3000.
 
 ### Leaving url intact
 
