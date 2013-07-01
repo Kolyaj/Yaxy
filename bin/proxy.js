@@ -15,17 +15,13 @@ var args = (function(argv) {
 
 var port = args['port'] || 8558;
 var configFile = args['config'] || 'yaxy-config.txt';
-if (args['proxy']) {
-    var proxy = (function(proxy) {
-        var proxyRegex = /^(?:([^:]*):([^@]*)@)?([^:]*):([0-9]*)$/;
-        var groups = proxyRegex.exec(proxy);
-        return {
-            user: groups[1],
-            password: groups[2],
-            host: groups[3],
-            port: +groups[4]
-        }
-    })(args['proxy']);
+if (args['proxy'] && args['proxy'].match(/^(?:([^:]*):([^@]*)@)?([^:]*):([0-9]*)$/)) {
+    var proxy = {
+        user: RegExp.$1,
+        password: RegExp.$2,
+        host: RegExp.$3,
+        port: RegExp.$4
+    };
 }
 
 if (!require('fs').existsSync(configFile)) {

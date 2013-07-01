@@ -75,6 +75,8 @@ function createAction(pattern, replacement) {
         return createDataAction(pattern, RegExp.$3 || '', RegExp.$1 || 'text/plain', !!RegExp.$2);
     } else if (replacement.indexOf('file://') == 0) {
         return createFileAction(pattern, replacement.slice(7));
+    } else if (replacement.indexOf('proxy:') == 0) {
+        return createProxyAction(replacement.slice(6).trim())
     } else {
         return createStandardAction(pattern, replacement);
     }
@@ -109,6 +111,21 @@ function createFileAction(pattern, fnameTemplate) {
         fname = fname.split('?')[0];
         fname = fname.replace(/~/g, state.get('documentRoot', ''));
         state.sendFile(fname);
+    };
+}
+
+function createProxyAction(proxyParam) {
+    if (proxyParam && proxyParam.match(/^(?:([^:]*):([^@]*)@)?([^:]*):([0-9]*)$/)) {
+        var proxy = {
+            user: RegExp.$1,
+            password: RegExp.$2,
+            host: RegExp.$3,
+            port: RegExp.$4
+        };
+    }
+    return function(state) {
+        state.setProxy(proxy);
+        state.doRequest();
     };
 }
 
