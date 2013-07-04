@@ -96,8 +96,10 @@ function createAbortAction() {
 
 function createDataAction(pattern, tpl, contentType, isBase64) {
     return function(state) {
-        var url = state.getRequestUrl();
-        var content = typeof pattern != 'string' && !isBase64 ? applyTemplate(tpl, url.match(pattern)) : tpl;
+        var content = tpl;
+        if (!isBase64) {
+            content = applyTemplate(tpl, state, pattern);
+        }
         content = new Buffer(content, isBase64 ? 'base64' : 'utf8');
         state.setResponseType(contentType);
         state.send(content);
@@ -106,9 +108,11 @@ function createDataAction(pattern, tpl, contentType, isBase64) {
 
 function createFileAction(pattern, fnameTemplate) {
     return function(state) {
-        var url = state.getRequestUrl();
-        var fname = typeof pattern == 'string' ? require('path').join(fnameTemplate, url.slice(pattern.length)) : applyTemplate(fnameTemplate, url.match(pattern));
-        fname = fname.split('?')[0];
+        var tpl = fnameTemplate;
+        if (typeof pattern == 'string') {
+            tpl = require('path').join(tpl, state.getRequestUrl().slice(pattern.length));
+        }
+        var fname = applyTemplate(tpl, state, pattern).split('?')[0];
         fname = fname.replace(/~/g, state.get('documentRoot', ''));
         state.sendFile(fname);
     };
@@ -131,22 +135,47 @@ function createProxyAction(proxyParam) {
 
 function createStandardAction(pattern, urlTemplate) {
     return function(state) {
-        var originUrl = state.getRequestUrl();
-        var url;
+        var tpl = urlTemplate;
         if (typeof pattern == 'string') {
-            url = urlTemplate.replace(/^(?!https?:\/\/)/, 'http://') + originUrl.slice(pattern.length);
-        } else {
-            url = applyTemplate(urlTemplate, originUrl.match(pattern));
+            tpl = tpl.replace(/^(?!https?:\/\/)/, 'http://') + state.getRequestUrl().slice(pattern.length);
         }
+        var url = applyTemplate(tpl, state, pattern);
         state.setRequestUrl(url);
         state.doRequest();
     };
 }
 
-function applyTemplate(tpl, args) {
-    args = args || [];
-    return tpl.replace(/\$(\d+)/g, function(ignore, num) {
-        return args[num] || '';
+function applyTemplate(tpl, state, pattern) {
+    var args = [];
+    if (typeof pattern != 'string') {
+        args = state.getRequestUrl().match(pattern);
+    }
+    return tpl.replace(/\$(?:(\d+)|\{(&)?([^}]+)\})/g, function(ignore, num, escape, varname) {
+        if (num) {
+            return args[num] || '';
+        } else {
+            var result = '';
+            var method = {
+                url: 'getRequestUrl',
+                host: 'getRequestHost',
+                port: 'getRequestPort',
+                path: 'getRequestPath',
+                query: 'getQueryString'
+            }[varname];
+            if (method) {
+                result = state[method]();
+            } else if (varname.indexOf('header:') == 0) {
+                result = state.getRequestHeader(varname.slice(7));
+            } else if (varname.indexOf('param:') == 0) {
+                result = state.getQueryParam(varname.slice(6));
+            } else if (varname.indexOf('cookie:')) {
+                result = state.getCookie(varname.slice(7));
+            }
+            if (escape) {
+                result = encodeURIComponent(result);
+            }
+            return result;
+        }
     });
 }
 
@@ -164,7 +193,7 @@ function createModifier(command) {
         var setArgName = setArgs.shift().trim();
         var setArgValue = setArgs.join(argsSeparator).trim();
         return function(state) {
-            state[methodName](setArgName, setArgValue);
+            state[methodName](setArgName, applyTemplate(setArgValue, state, ''));
         };
     }
     if (/^(RemoveRequestHeader|RemoveResponseHeader|RemoveQueryParam|RemoveCookie)$/.test(commandName)) {
