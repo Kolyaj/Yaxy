@@ -164,8 +164,10 @@ function applyTemplate(tpl, state, pattern) {
     if (typeof pattern != 'string') {
         args = state.getRequestUrl().match(pattern);
     }
-    return tpl.replace(/\$(?:(\d+)|\{(&)?([^}]+)\})/g, function(ignore, num, escape, varname) {
-        if (num) {
+    return tpl.replace(/(?:(~)|\$(?:(\d+)|\{(&)?([^}]+)\}))/g, function(ignore, tilde, num, escape, varname) {
+        if (tilde) {
+            return state.get('documentRoot');
+        } else if (num) {
             return args[num] || '';
         } else {
             var result = '';
@@ -233,10 +235,9 @@ function createModifier(command) {
     }
 
     if (commandName == 'SetDocumentRoot') {
-        var newDocumentRoot = commandArg;
+        var documentRoot = commandArg;
         return function(state) {
-            var oldDocumentRoot = state.get('documentRoot', '');
-            state.set('documentRoot', newDocumentRoot.replace(/~/g, oldDocumentRoot));
+            state.set('documentRoot', applyTemplate(documentRoot, state, ''));
         };
     }
 
