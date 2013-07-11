@@ -77,6 +77,8 @@ function createAction(pattern, replacement) {
         return createFileAction(pattern, replacement.slice(7));
     } else if (replacement.indexOf('proxy:') == 0) {
         return createProxyAction(replacement.slice(6).trim())
+    } else if (replacement.indexOf('bin:') == 0) {
+        return createBinAction(pattern, replacement.slice(4).trim());
     } else {
         return createStandardAction(pattern, replacement);
     }
@@ -130,6 +132,18 @@ function createProxyAction(proxyParam) {
     return function(state) {
         state.setProxy(proxy);
         state.doRequest();
+    };
+}
+
+function createBinAction(pattern, commandTpl) {
+    return function(state) {
+        var command = applyTemplate(commandTpl, state, pattern);
+        require('child_process').exec(command, {encoding: 'binary'}, function(err, stdout, stderr) {
+            if (err) {
+                return state.error(err);
+            }
+            state.send(stdout || stderr);
+        });
     };
 }
 
