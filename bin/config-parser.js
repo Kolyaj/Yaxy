@@ -57,13 +57,18 @@ function createPattern(source) {
         };
     } else if (source[0] == '!') {
         return {
-            url: source.slice(1).replace(/^(?!https?:\/\/)/, 'http://')
+            url: normalizeUrl(source.slice(1))
         };
     } else {
         return {
-            urlStart: source.replace(/^(?!https?:\/\/)/, 'http://')
+            urlStart: normalizeUrl(source)
         };
     }
+}
+
+function normalizeUrl(url) {
+    // С помощью такой комбинации parse-format кириллические домены переводятся в punycode
+    return require('url').format(require('url').parse(url.replace(/^(?!https?:\/\/)/, 'http://')));
 }
 
 function createAction(pattern, replacement) {
