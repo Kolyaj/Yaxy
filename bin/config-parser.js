@@ -68,7 +68,11 @@ function createPattern(source) {
 
 function normalizeUrl(url) {
     // С помощью такой комбинации parse-format кириллические домены переводятся в punycode
-    return require('url').format(require('url').parse(url.replace(/^(?!https?:\/\/)/, 'http://')));
+    var normalizedUrl = require('url').format(require('url').parse(url.replace(/^(?!https?:\/\/)/, 'http://')));
+    if (url.lastIndexOf('/') != url.length - 1) {
+        normalizedUrl = normalizedUrl.replace(/\/$/, '');
+    }
+    return normalizedUrl;
 }
 
 function createAction(pattern, replacement) {
