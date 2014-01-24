@@ -1,3 +1,7 @@
+### Version 0.1.7
+
+* Simple https support
+
 ### Version 0.1.6
 
 * Punycode support
