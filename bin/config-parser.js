@@ -147,7 +147,7 @@ function createProxyAction(proxyParam) {
 function createBinAction(pattern, commandTpl) {
     return function(state) {
         var command = applyTemplate(commandTpl, state, pattern);
-        require('child_process').exec(command, {encoding: 'binary'}, function(err, stdout, stderr) {
+        require('child_process').exec(command, {encoding: 'binary', maxBuffer: 1024 * 1024}, function(err, stdout, stderr) {
             if (err) {
                 return state.error(err);
             }
