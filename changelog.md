@@ -1,3 +1,7 @@
+### Version 0.1.9
+
+* Bugfixes
+
 ### Version 0.1.8
 
 * Full https support
