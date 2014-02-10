@@ -14,6 +14,7 @@ var args = (function(argv) {
 })(process.argv);
 
 var port = args['port'] || 8558;
+var httpsPort = args['https-port'] || (args['no-https'] ? 0 : 8559);
 var configFile = args['config'] || 'yaxy-config.txt';
 if (args['proxy'] && args['proxy'].match(/^(?:([^:]*):([^@]*)@)?([^:]*):([0-9]*)$/)) {
     var proxy = {
@@ -36,7 +37,7 @@ process.on('uncaughtException', function(err) {
     console.error(err.stack);
 });
 
-var server = require('../lib/yaxy')(port);
+var server = require('../lib/yaxy')(port, httpsPort);
 if (proxy) {
     server.setProxy(proxy);
 }
@@ -49,6 +50,12 @@ function loadConfig() {
         if (err) {
             return console.error(err.stack);
         }
+
+        server.unuseAllSSL();
+        config.sslHosts.forEach(function(host) {
+            server.useSSLFor(host);
+        });
+
         server.unbindAll();
         config.sections.unshift({
             modifiers: [],

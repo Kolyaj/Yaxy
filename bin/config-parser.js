@@ -7,10 +7,11 @@ exports.parse = function(fname, callback) {
         var result = {
             modifiers: [],
             rules: [],
-            sections: []
+            sections: [],
+            sslHosts: []
         };
         var currentSection;
-        var currentRule;
+        var currentRules;
         var skiping = false;
         config.split('\n').forEach(function(line) {
             line = line.trim();
@@ -23,24 +24,38 @@ exports.parse = function(fname, callback) {
                         rules: []
                     };
                     result.sections.push(currentSection);
-                    currentRule = null;
+                    currentRules = null;
                 } else if (!skiping) {
-                    if (line.indexOf('$') == 0) {
+                    if (line.indexOf('$UseSSLFor ') == 0) {
+                        line.split(/\s+/).slice(1).forEach(function(host) {
+                            result.sslHosts.push(host);
+                        });
+                    } else if (line.indexOf('$') == 0) {
                         var modifier = createModifier(line.slice(1));
                         if (modifier) {
-                            (currentRule || currentSection || result).modifiers.push(modifier);
+                            if (currentRules) {
+                                currentRules.forEach(function(rule) {
+                                    rule.modifiers.push(modifier);
+                                });
+                            } else {
+                                (currentSection || result).modifiers.push(modifier);
+                            }
                         }
                     } else if (line.indexOf('=>') > -1) {
                         var operands = line.split('=>').map(function(operand) {
                             return operand.trim();
                         });
-                        var pattern = createPattern(operands[0]);
-                        currentRule = {
-                            pattern: pattern,
-                            action: createAction(pattern.url || pattern.urlStart, operands[1]) ,
-                            modifiers: []
-                        };
-                        (currentSection || result).rules.push(currentRule);
+                        var patterns = createPatterns(operands[0]);
+                        currentRules = [];
+                        patterns.forEach(function(pattern) {
+                            var rule = {
+                                pattern: pattern,
+                                action: createAction(pattern.url || pattern.urlStart, operands[1]),
+                                modifiers: []
+                            };
+                            currentRules.push(rule);
+                            (currentSection || result).rules.push(rule);
+                        });
                     }
 
                 }
@@ -50,29 +65,39 @@ exports.parse = function(fname, callback) {
     });
 };
 
-function createPattern(source) {
+function createPatterns(source) {
     if (source[0] == '/' && source[source.length - 1] == '/') {
-        return {
+        return [{
             url: new RegExp(source.substr(1, source.length - 2), 'i')
-        };
+        }];
     } else if (source[0] == '!') {
-        return {
-            url: normalizeUrl(source.slice(1))
-        };
+        return normalizeUrl(source.slice(1)).map(function(url) {
+            return {
+                url: url
+            };
+        });
     } else {
-        return {
-            urlStart: normalizeUrl(source)
-        };
+        return normalizeUrl(source).map(function(url) {
+            return {
+                urlStart: url
+            };
+        });
     }
 }
 
 function normalizeUrl(url) {
-    // С помощью такой комбинации parse-format кириллические домены переводятся в punycode
-    var normalizedUrl = require('url').format(require('url').parse(url.replace(/^(?!https?:\/\/)/, 'http://')));
-    if (url.lastIndexOf('/') != url.length - 1) {
-        normalizedUrl = normalizedUrl.replace(/\/$/, '');
+    var urls = [url];
+    if (!/^https?:\/\//.test(url)) {
+        urls = ['http://' + url, 'https://' + url];
     }
-    return normalizedUrl;
+    return urls.map(function(url) {
+        // С помощью такой комбинации parse-format кириллические домены переводятся в punycode
+        var normalizedUrl = require('url').format(require('url').parse(url));
+        if (url.lastIndexOf('/') != url.length - 1) {
+            normalizedUrl = normalizedUrl.replace(/\/$/, '');
+        }
+        return normalizedUrl;
+    });
 }
 
 function createAction(pattern, replacement) {
@@ -158,11 +183,11 @@ function createBinAction(pattern, commandTpl) {
 
 function createStandardAction(pattern, urlTemplate) {
     return function(state) {
-        var tpl = urlTemplate;
+        var url = applyTemplate(urlTemplate, state, pattern);
+        url = url.replace(/^(?!https?:\/\/)/, state.getRequestProtocol() + '//');
         if (typeof pattern == 'string') {
-            tpl = tpl.replace(/^(?!https?:\/\/)/, 'http://') + state.getRequestUrl().slice(pattern.length);
+            url += state.getRequestUrl().slice(pattern.length);
         }
-        var url = applyTemplate(tpl, state, pattern);
         state.setRequestUrl(url);
         state.doRequest();
     };
