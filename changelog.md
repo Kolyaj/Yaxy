@@ -1,3 +1,7 @@
+### Version 0.1.10
+
+* rejectUnauthorized https option
+
 ### Version 0.1.9
 
 * Bugfixes
