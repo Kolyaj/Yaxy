@@ -1,6 +1,10 @@
+### Version 0.1.12
+
+* state.removeCookie bugfix
+
 ### Version 0.1.11
 
-API improvements
+* API improvements
 
 ### Version 0.1.10
 
