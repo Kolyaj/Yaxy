@@ -1,3 +1,7 @@
+### Version 0.1.13
+
+* Headers bugfix
+
 ### Version 0.1.12
 
 * state.removeCookie bugfix
