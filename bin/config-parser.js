@@ -1,67 +1,74 @@
-exports.parse = function(fname, callback) {
-    require('fs').readFile(fname, 'utf8', function(err, config) {
-        if (err) {
-            return callback(err);
+var Parser = require('lblr-parser');
+var Q = require('q');
+
+exports.parse = function(fname) {
+    var parser = Parser();
+
+    parser.registerLineProcessor(/^\s*(.*?)\s*=>\s*(.*?)\s*$/, function(line, allMatch, operand1, operand2, data) {
+        if (!data.skiping) {
+            var patterns = createPatterns(operand1);
+            data.currentRules = [];
+            patterns.forEach(function(pattern) {
+                var rule = {
+                    pattern: pattern,
+                    action: createAction(pattern.url || pattern.urlStart, operand2),
+                    modifiers: []
+                };
+                data.currentRules.push(rule);
+                (data.currentSection || data.result).rules.push(rule);
+            });
         }
+    });
 
-        var result = {
-            modifiers: [],
-            rules: [],
-            sections: [],
-            sslHosts: []
-        };
-        var currentSection;
-        var currentRules;
-        var skiping = false;
-        config.split('\n').forEach(function(line) {
-            line = line.trim();
-            if (line && line.indexOf('#') != 0) {
-                if (line.indexOf('[') == 0 && line.indexOf(']') == line.length - 1) {
-                    var sectionName = line.slice(1, -1).trim();
-                    skiping = sectionName.indexOf('#') == 0;
-                    currentSection = {
-                        modifiers: [],
-                        rules: []
-                    };
-                    result.sections.push(currentSection);
-                    currentRules = null;
-                } else if (!skiping) {
-                    if (line.indexOf('$UseSSLFor ') == 0) {
-                        line.split(/\s+/).slice(1).forEach(function(host) {
-                            result.sslHosts.push(host);
-                        });
-                    } else if (line.indexOf('$') == 0) {
-                        var modifier = createModifier(line.slice(1));
-                        if (modifier) {
-                            if (currentRules) {
-                                currentRules.forEach(function(rule) {
-                                    rule.modifiers.push(modifier);
-                                });
-                            } else {
-                                (currentSection || result).modifiers.push(modifier);
-                            }
-                        }
-                    } else if (line.indexOf('=>') > -1) {
-                        var operands = line.split('=>').map(function(operand) {
-                            return operand.trim();
-                        });
-                        var patterns = createPatterns(operands[0]);
-                        currentRules = [];
-                        patterns.forEach(function(pattern) {
-                            var rule = {
-                                pattern: pattern,
-                                action: createAction(pattern.url || pattern.urlStart, operands[1]),
-                                modifiers: []
-                            };
-                            currentRules.push(rule);
-                            (currentSection || result).rules.push(rule);
-                        });
-                    }
-
+    parser.registerLineProcessor(/^\$(.*)/, function(line, allMatch, modifierRule, data) {
+        if (!data.skiping) {
+            var modifier = createModifier(modifierRule);
+            if (modifier) {
+                if (data.currentRules) {
+                    data.currentRules.forEach(function(rule) {
+                        rule.modifiers.push(modifier);
+                    });
+                } else {
+                    (data.currentSection || data.result).modifiers.push(modifier);
                 }
             }
-        });
-        callback(null, result);
+        }
+    });
+
+    parser.registerLineProcessor(/^\$UseSSLFor (.*)/, function(line, allMatch, hosts, data) {
+        if (!data.skiping) {
+            hosts.split(/\s+/).forEach(function(host) {
+                data.result.sslHosts.push(host);
+            });
+        }
+    });
+
+    parser.registerLineProcessor(/^\[\s*(#)?.*]$/, function(line, allMatch, commentChar, data) {
+        data.skiping = Boolean(commentChar);
+        data.currentSection = {
+            modifiers: [],
+            rules: []
+        };
+        data.result.sections.push(data.currentSection);
+        data.currentRules = null;
+    });
+
+    parser.registerLineProcessor(/^(#|$)/, function() {
+
+    });
+
+    return Q.nfcall(require('fs').readFile, fname, 'utf-8').then(function(content) {
+        return parser.parse(content, {
+            result: {
+                modifiers: [],
+                rules: [],
+                sections: [],
+                sslHosts: []
+            },
+            currentSection: null,
+            currentRules: null,
+            skiping: false
+        }).get('result');
     });
 };
 

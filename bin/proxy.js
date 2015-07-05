@@ -50,11 +50,7 @@ loadConfig();
 require('fs').watch(configFile, loadConfig);
 
 function loadConfig() {
-    require('./config-parser').parse(configFile, function(err, config) {
-        if (err) {
-            return console.error(err.stack);
-        }
-
+    require('./config-parser').parse(configFile).then(function(config) {
         server.unuseAllSSL();
         config.sslHosts.forEach(function(host) {
             server.useSSLFor(host);
@@ -85,5 +81,7 @@ function loadConfig() {
                 server.bind(rule.pattern);
             });
         });
+    }).catch(function(err) {
+        console.error(err.stack)
     });
 }
