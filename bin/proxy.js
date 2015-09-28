@@ -16,6 +16,10 @@ var args = (function(argv) {
 var port = args['port'] || 8558;
 var httpsPort = args['https-port'] || (args['no-https'] ? 0 : 8559);
 var configFile = args['config'] || 'yaxy-config.txt';
+var certs = {
+    key: args['key'],
+    cert: args['cert']
+};
 if (args['proxy'] && args['proxy'].match(/^(?:([^:]*):([^@]*)@)?([^:]*):([0-9]*)$/)) {
     var proxy = {
         user: RegExp.$1,
@@ -37,7 +41,7 @@ process.on('uncaughtException', function(err) {
     console.error(err.stack);
 });
 
-var server = require('../lib/yaxy')(port, httpsPort);
+var server = require('../lib/yaxy')(port, httpsPort, certs);
 if (proxy) {
     server.setProxy(proxy);
 }
