@@ -38,6 +38,7 @@ exports.parse = function(fname) {
     parser.registerLineProcessor(/^\$Include (.*)/, function(line, allMatch, file, data) {
         if (!data.skiping) {
             var filename = require('path').join(data.baseDirs[0], file);
+            data.result.files.push(filename);
             return Q.nfcall(require('fs').readFile, filename, 'utf8').then(function(content) {
                 return [
                     '$$SetBaseDir ' + require('path').dirname(filename),
@@ -87,7 +88,8 @@ exports.parse = function(fname) {
                 modifiers: [],
                 rules: [],
                 sections: [],
-                sslHosts: []
+                sslHosts: [],
+                files: []
             },
             baseDirs: [require('path').dirname(fname)],
             currentSection: null,

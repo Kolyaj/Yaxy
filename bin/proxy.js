@@ -48,12 +48,27 @@ if (proxy) {
 
 loadConfig();
 require('fs').watch(configFile, loadConfig);
+var includeWatchers = [];
 
 function loadConfig() {
     require('./config-parser').parse(configFile).then(function(config) {
         server.unuseAllSSL();
         config.sslHosts.forEach(function(host) {
             server.useSSLFor(host);
+        });
+
+        includeWatchers = includeWatchers.filter(function(fname) {
+            if (config.files.indexOf(fname) == -1) {
+                require('fs').unwatchFile(fname, loadConfig);
+                return false;
+            }
+            return true;
+        });
+        config.files.forEach(function(fname) {
+            if (includeWatchers.indexOf(fname) == -1) {
+                require('fs').watch(fname, loadConfig);
+                includeWatchers.push(fname);
+            }
         });
 
         server.unbindAll();
