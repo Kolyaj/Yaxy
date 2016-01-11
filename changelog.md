@@ -1,3 +1,7 @@
+### Version 0.1.15
+
+* Custom SSL sertificates
+
 ### Version 0.1.14
 
 * Headers bugfix
