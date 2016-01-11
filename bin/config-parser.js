@@ -2,9 +2,9 @@ var Parser = require('lblr-parser');
 var Q = require('q');
 
 exports.parse = function(fname) {
-    var parser = Parser();
+    var parser = Parser(true);
 
-    parser.registerLineProcessor(/^\s*(.*?)\s*=>\s*(.*?)\s*$/, function(line, allMatch, operand1, operand2, data) {
+    parser.registerLineProcessor(/^(.*?)\s*=>\s*(.*?)$/, function(line, allMatch, operand1, operand2, data) {
         if (!data.skiping) {
             var patterns = createPatterns(operand1);
             data.currentRules = [];
