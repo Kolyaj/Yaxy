@@ -1,0 +1,1 @@
+www.yandex.ru => localhost:9595

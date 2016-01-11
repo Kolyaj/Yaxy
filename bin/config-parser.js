@@ -35,6 +35,30 @@ exports.parse = function(fname) {
         }
     });
 
+    parser.registerLineProcessor(/^\$Include (.*)/, function(line, allMatch, file, data) {
+        if (!data.skiping) {
+            var filename = require('path').join(data.baseDirs[0], file);
+            return Q.nfcall(require('fs').readFile, filename, 'utf8').then(function(content) {
+                return [
+                    '$$SetBaseDir ' + require('path').dirname(filename),
+                    content,
+                    '$$UnsetBaseDir'
+                ].join('\n') + '\n';
+            }).catch(function(err) {
+                console.log(err.message);
+                return '';
+            });
+        }
+    });
+
+    parser.registerLineProcessor(/^\$\$SetBaseDir (.*)/, function(line, allMatch, dirname, data) {
+        data.baseDirs.unshift(dirname);
+    });
+
+    parser.registerLineProcessor(/^\$\$UnsetBaseDir/, function(line, allMatch, data) {
+        data.baseDirs.shift();
+    });
+
     parser.registerLineProcessor(/^\$UseSSLFor (.*)/, function(line, allMatch, hosts, data) {
         if (!data.skiping) {
             hosts.split(/\s+/).forEach(function(host) {
@@ -57,7 +81,7 @@ exports.parse = function(fname) {
 
     });
 
-    return Q.nfcall(require('fs').readFile, fname, 'utf-8').then(function(content) {
+    return Q.nfcall(require('fs').readFile, fname, 'utf8').then(function(content) {
         return parser.parse(content, {
             result: {
                 modifiers: [],
@@ -65,6 +89,7 @@ exports.parse = function(fname) {
                 sections: [],
                 sslHosts: []
             },
+            baseDirs: [require('path').dirname(fname)],
             currentSection: null,
             currentRules: null,
             skiping: false

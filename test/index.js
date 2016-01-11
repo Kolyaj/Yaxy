@@ -8,7 +8,10 @@ describe('Yaxy', function() {
     describe('Rules', function() {
         var tests = [
             ['simple-request', 'http://localhost:9595/', 'Hello'],
-            ['simple-rewrite', 'http://www.yandex.ru/', 'Hello']
+            ['simple-rewrite', 'http://www.yandex.ru/', 'Hello'],
+            ['include-01', 'http://www.yandex.ru/', 'Hello'],
+            ['include-02', 'http://www.yandex.ru/', 'Hello'],
+            ['include-03', 'http://www.yandex.ru/', 'Hello']
         ];
 
         var yaxy;
