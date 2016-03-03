@@ -1,3 +1,7 @@
+### Version 0.2.0
+
+* $Include
+
 ### Version 0.1.15
 
 * Custom SSL sertificates
