@@ -1,21 +1,19 @@
 var Parser = require('lblr-parser');
 var Q = require('q');
 
-exports.parse = function(fname) {
+exports.parse = function(server, fname) {
     var parser = Parser(true);
 
     parser.registerLineProcessor(/^(.*?)\s*=>\s*(.*?)$/, function(line, allMatch, operand1, operand2, data) {
         if (!data.skiping) {
+            applyRules(server, data);
             var patterns = createPatterns(operand1);
-            data.currentRules = [];
             patterns.forEach(function(pattern) {
-                var rule = {
+                data.currentRules.push({
                     pattern: pattern,
                     action: createAction(pattern.url || pattern.urlStart, operand2),
                     modifiers: []
-                };
-                data.currentRules.push(rule);
-                (data.currentSection || data.result).rules.push(rule);
+                });
             });
         }
     });
@@ -24,80 +22,106 @@ exports.parse = function(fname) {
         if (!data.skiping) {
             var modifier = createModifier(modifierRule);
             if (modifier) {
-                if (data.currentRules) {
+                if (data.currentRules.length) {
                     data.currentRules.forEach(function(rule) {
                         rule.modifiers.push(modifier);
                     });
                 } else {
-                    (data.currentSection || data.result).modifiers.push(modifier);
+                    (data.currentSection || data).modifiers.push(modifier);
                 }
             }
         }
     });
 
-    parser.registerLineProcessor(/^\$Include (.*)/, function(line, allMatch, file, data) {
+    parser.registerLineProcessor(/^\$Include\s+(.*)/, function(line, allMatch, filename, data) {
         if (!data.skiping) {
-            var filename = require('path').join(data.baseDirs[0], file);
-            data.result.files.push(filename);
-            return Q.nfcall(require('fs').readFile, filename, 'utf8').then(function(content) {
-                return [
-                    '$$SetBaseDir ' + require('path').dirname(filename),
-                    content,
-                    '$$UnsetBaseDir'
-                ].join('\n') + '\n';
+            applyRules(server, data);
+            return parseFile(parser, filename).then(function(includedData) {
+                applyRules(server, includedData);
+                [].push.apply(data.files, includedData.files);
             }).catch(function(err) {
                 console.log(err.message);
-                return '';
             });
         }
     });
 
-    parser.registerLineProcessor(/^\$\$SetBaseDir (.*)/, function(line, allMatch, dirname, data) {
-        data.baseDirs.unshift(dirname);
-    });
-
-    parser.registerLineProcessor(/^\$\$UnsetBaseDir/, function(line, allMatch, data) {
-        data.baseDirs.shift();
-    });
-
-    parser.registerLineProcessor(/^\$UseSSLFor (.*)/, function(line, allMatch, hosts, data) {
+    parser.registerLineProcessor(/^\$UseSSLFor\s+(.*)/, function(line, allMatch, hosts, data) {
         if (!data.skiping) {
             hosts.split(/\s+/).forEach(function(host) {
-                data.result.sslHosts.push(host);
+                server.useSSLFor(host);
             });
         }
     });
 
     parser.registerLineProcessor(/^\[\s*(#)?.*]$/, function(line, allMatch, commentChar, data) {
+        applyRules(server, data);
         data.skiping = Boolean(commentChar);
         data.currentSection = {
             modifiers: [],
-            rules: []
+            documentRoot: data.documentRoot
         };
-        data.result.sections.push(data.currentSection);
-        data.currentRules = null;
+    });
+
+    parser.registerLineProcessor(/^\$SetDocumentRoot (.*)/, function(line, allMatch, documentRoot, data) {
+        applyRules(server, data);
+        documentRoot = documentRoot.trim();
+        if (data.currentSection) {
+            data.currentSection.documentRoot = documentRoot;
+        } else {
+            data.documentRoot = documentRoot;
+        }
+    });
+
+    parser.registerLineProcessor(/~/, function(line, ignored, data) {
+        return line.replace(/~/g, data.currentSection ? data.currentSection.documentRoot : data.documentRoot);
     });
 
     parser.registerLineProcessor(/^(#|$)/, function() {
 
     });
 
-    return Q.nfcall(require('fs').readFile, fname, 'utf8').then(function(content) {
-        return parser.parse(content, {
-            result: {
-                modifiers: [],
-                rules: [],
-                sections: [],
-                sslHosts: [],
-                files: []
-            },
-            baseDirs: [require('path').dirname(fname)],
-            currentSection: null,
-            currentRules: null,
-            skiping: false
-        }).get('result');
+    return parseFile(parser, fname).then(function(data) {
+        applyRules(server, data);
+        return data.files;
     });
 };
+
+function applyRules(server, data) {
+    if (data.currentRules.length) {
+        var modifiers = data.modifiers.concat(data.currentSection ? data.currentSection.modifiers : []);
+        data.currentRules.forEach(function(rule) {
+            var ruleModifiers = modifiers.concat(rule.modifiers);
+            rule.pattern.fn = function(state) {
+                ruleModifiers.forEach(function(modifier) {
+                    modifier(state);
+                });
+                var delay = state.get('delay', 0);
+                if (delay) {
+                    setTimeout(function() {
+                        rule.action(state);
+                    }, delay * 1000);
+                } else {
+                    rule.action(state);
+                }
+            };
+            server.bind(rule.pattern);
+        });
+        data.currentRules.length = 0;
+    }
+}
+
+function parseFile(parser, fname) {
+    return Q.nfcall(require('fs').readFile, fname, 'utf8').then(function(content) {
+        return parser.parse(content, {
+            documentRoot: require('path').dirname(fname),
+            modifiers: [],
+            files: [fname],
+            currentSection: null,
+            currentRules: [],
+            skiping: false
+        });
+    });
+}
 
 function createPatterns(source) {
     if (source[0] == '/' && source[source.length - 1] == '/') {
@@ -183,7 +207,6 @@ function createFileAction(pattern, fnameTemplate) {
             tpl = require('path').join(tpl, state.getRequestUrl().slice(pattern.length));
         }
         var fname = applyTemplate(tpl, state, pattern).split('?')[0];
-        fname = fname.replace(/~/g, state.get('documentRoot', ''));
         state.sendFile(fname);
     };
 }
@@ -232,10 +255,8 @@ function applyTemplate(tpl, state, pattern) {
     if (typeof pattern != 'string') {
         args = state.getRequestUrl().match(pattern);
     }
-    return tpl.replace(/(?:(~)|\$(?:(\d+)|\{(&)?([^}]+)\}))/g, function(ignore, tilde, num, escape, varname) {
-        if (tilde) {
-            return state.get('documentRoot');
-        } else if (num) {
+    return tpl.replace(/(?:\$(?:(\d+)|\{(&)?([^}]+)\}))/g, function(ignore, num, escape, varname) {
+        if (num) {
             return args[num] || '';
         } else {
             var result = '';
@@ -300,13 +321,6 @@ function createModifier(command) {
                 state.set('delay', timeout);
             };
         }
-    }
-
-    if (commandName == 'SetDocumentRoot') {
-        var documentRoot = commandArg;
-        return function(state) {
-            state.set('documentRoot', applyTemplate(documentRoot, state, ''));
-        };
     }
 
     console.log('Unknown modifier ' + commandName);

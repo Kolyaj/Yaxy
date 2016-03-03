@@ -51,50 +51,21 @@ require('fs').watch(configFile, loadConfig);
 var includeWatchers = [];
 
 function loadConfig() {
-    require('./config-parser').parse(configFile).then(function(config) {
-        server.unuseAllSSL();
-        config.sslHosts.forEach(function(host) {
-            server.useSSLFor(host);
-        });
-
+    server.unbindAll();
+    server.unuseAllSSL();
+    require('./config-parser').parse(server, configFile).then(function(allFiles) {
         includeWatchers = includeWatchers.filter(function(fname) {
-            if (config.files.indexOf(fname) == -1) {
+            if (allFiles.indexOf(fname) == -1) {
                 require('fs').unwatchFile(fname, loadConfig);
                 return false;
             }
             return true;
         });
-        config.files.forEach(function(fname) {
+        allFiles.forEach(function(fname) {
             if (includeWatchers.indexOf(fname) == -1) {
                 require('fs').watch(fname, loadConfig);
                 includeWatchers.push(fname);
             }
-        });
-
-        server.unbindAll();
-        config.sections.unshift({
-            modifiers: [],
-            rules: config.rules
-        });
-        config.sections.forEach(function(section) {
-            var sectionModifiers = config.modifiers.concat(section.modifiers);
-            section.rules.forEach(function(rule) {
-                var ruleModifers = sectionModifiers.concat(rule.modifiers);
-                rule.pattern.fn = function(state) {
-                    ruleModifers.forEach(function(modifier) {
-                        modifier(state);
-                    });
-                    var delay = state.get('delay', 0);
-                    if (delay) {
-                        setTimeout(function() {
-                            rule.action(state);
-                        }, delay * 1000);
-                    } else {
-                        rule.action(state);
-                    }
-                };
-                server.bind(rule.pattern);
-            });
         });
     }).catch(function(err) {
         console.error(err.stack)

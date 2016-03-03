@@ -1,2 +1,2 @@
-$Include include-03/include-03-1.txt
-$Include include-03-2.txt
+$Include ~/include-03/include-03-1.txt
+$Include ~/include-03-2.txt
