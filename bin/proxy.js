@@ -45,6 +45,9 @@ var server = require('../lib/yaxy')(port, httpsPort, certs);
 if (proxy) {
     server.setProxy(proxy);
 }
+if (args['auth']) {
+    server.setAuth(args['auth']);
+}
 
 loadConfig();
 require('fs').watch(configFile, loadConfig);
