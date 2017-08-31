@@ -1,4 +1,4 @@
 .npmignore
 .idea
-tests
+test
 yaxy-config.txt
