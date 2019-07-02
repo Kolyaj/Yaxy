@@ -1,6 +1,6 @@
 # Yaxy
 
-[Описание на русском языке](readme_ru.md)
+[Более полное описание на русском языке](readme_ru.md)
 
 Yaxy is a proxy-server for a web developer, it substitutes the required resources with simple rules.
 

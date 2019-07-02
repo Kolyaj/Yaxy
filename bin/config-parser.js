@@ -1,4 +1,5 @@
 var Parser = require('lblr-parser');
+var {promisify} = require('util');
 var Q = require('q');
 
 exports.parse = function(server, fname) {
@@ -111,7 +112,7 @@ function applyRules(server, data) {
 }
 
 function parseFile(parser, fname) {
-    return Q.nfcall(require('fs').readFile, fname, 'utf8').then(function(content) {
+    return promisify(require('fs').readFile)(fname, 'utf8').then(function(content) {
         return parser.parse(content, {
             documentRoot: require('path').dirname(fname),
             modifiers: [],
@@ -124,19 +125,27 @@ function parseFile(parser, fname) {
 }
 
 function createPatterns(source) {
-    if (source[0] == '/' && source[source.length - 1] == '/') {
+    var matches = source.match(/^([A-Z0-9]+(?:\|[A-Z0-9]+)*\s+)?(.*)/);
+    if (matches[1]) {
+        var methodPattern = new RegExp(`^(${matches[1].trim()})$`);
+    }
+    var urlPattern = matches[2];
+    if (urlPattern[0] === '/' && urlPattern[urlPattern.length - 1] === '/') {
         return [{
-            url: new RegExp(source.substr(1, source.length - 2), 'i')
+            method: methodPattern,
+            url: new RegExp(urlPattern.substr(1, urlPattern.length - 2), 'i')
         }];
-    } else if (source[0] == '!') {
-        return normalizeUrl(source.slice(1)).map(function(url) {
+    } else if (urlPattern[0] === '!') {
+        return normalizeUrl(urlPattern.slice(1)).map(function(url) {
             return {
+                method: methodPattern,
                 url: url
             };
         });
     } else {
-        return normalizeUrl(source).map(function(url) {
+        return normalizeUrl(urlPattern).map(function(url) {
             return {
+                method: methodPattern,
                 urlStart: url
             };
         });
@@ -151,7 +160,7 @@ function normalizeUrl(url) {
     return urls.map(function(url) {
         // С помощью такой комбинации parse-format кириллические домены переводятся в punycode
         var normalizedUrl = require('url').format(require('url').parse(url));
-        if (url.lastIndexOf('/') != url.length - 1) {
+        if (url.lastIndexOf('/') !== url.length - 1) {
             normalizedUrl = normalizedUrl.replace(/\/$/, '');
         }
         return normalizedUrl;
@@ -159,17 +168,17 @@ function normalizeUrl(url) {
 }
 
 function createAction(pattern, replacement) {
-    if (replacement == '$') {
+    if (replacement === '$') {
         return createDefaultAction();
-    } else if (replacement == '') {
+    } else if (replacement === '') {
         return createAbortAction();
     } else if (replacement.match(/^data:(?:([a-zA-Z/-]+);)?(base64,)?(.*)/)) {
         return createDataAction(pattern, RegExp.$3 || '', RegExp.$1 || 'text/plain', !!RegExp.$2);
-    } else if (replacement.indexOf('file://') == 0) {
+    } else if (replacement.indexOf('file://') === 0) {
         return createFileAction(pattern, replacement.slice(7));
-    } else if (replacement.indexOf('proxy:') == 0) {
+    } else if (replacement.indexOf('proxy:') === 0) {
         return createProxyAction(replacement.slice(6).trim())
-    } else if (replacement.indexOf('bin:') == 0) {
+    } else if (replacement.indexOf('bin:') === 0) {
         return createBinAction(pattern, replacement.slice(4).trim());
     } else {
         return createStandardAction(pattern, replacement);
@@ -255,7 +264,7 @@ function applyTemplate(tpl, state, pattern) {
     if (typeof pattern != 'string') {
         args = state.getRequestUrl().match(pattern);
     }
-    return tpl.replace(/(?:\$(?:(\d+)|\{(&)?([^}]+)\}))/g, function(ignore, num, escape, varname) {
+    return tpl.replace(/(?:\$(?:(\d+)|{(&)?([^}]+)}))/g, function(ignore, num, escape, varname) {
         if (num) {
             return args[num] || '';
         } else {
@@ -269,9 +278,9 @@ function applyTemplate(tpl, state, pattern) {
             }[varname];
             if (method) {
                 result = state[method]();
-            } else if (varname.indexOf('header:') == 0) {
+            } else if (varname.indexOf('header:') === 0) {
                 result = state.getRequestHeader(varname.slice(7));
-            } else if (varname.indexOf('param:') == 0) {
+            } else if (varname.indexOf('param:') === 0) {
                 result = state.getQueryParam(varname.slice(6));
             } else if (varname.indexOf('cookie:')) {
                 result = state.getCookie(varname.slice(7));
@@ -291,7 +300,7 @@ function createModifier(command) {
     var commandArg = args.join(' ');
     if (/^(SetRequestHeader|SetResponseHeader|SetQueryParam|SetCookie)$/.test(commandName)) {
         var argsSeparator = ':';
-        if (commandName == 'SetQueryParam' || commandName == 'SetCookie') {
+        if (commandName === 'SetQueryParam' || commandName === 'SetCookie') {
             argsSeparator = '=';
         }
         var setArgs = commandArg.split(argsSeparator);
@@ -306,7 +315,7 @@ function createModifier(command) {
             state[methodName](commandArg);
         };
     }
-    if (commandName == 'StatusCode') {
+    if (commandName === 'StatusCode') {
         var statusCode = +commandArg;
         if (statusCode) {
             return function(state) {
@@ -314,7 +323,7 @@ function createModifier(command) {
             };
         }
     }
-    if (commandName == 'Delay') {
+    if (commandName === 'Delay') {
         var timeout = +commandArg;
         if (timeout) {
             return function(state) {
