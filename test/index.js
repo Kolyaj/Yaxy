@@ -1,4 +1,3 @@
-var Q = require('q');
 var spawn = require('child_process').spawn;
 var assert = require('assert');
 
@@ -23,7 +22,7 @@ describe('Yaxy', function() {
 
         tests.forEach(function(test) {
             it(test[0], function() {
-                return Q.Promise(function(resolve, reject) {
+                return new Promise(function(resolve, reject) {
                     try {
                         yaxy = spawn('node', ['index.js', '--config', 'test/yaxy-configs/' + test[0] + '.txt', '--port', '9559', '--https-port', '9569'], {
                             cwd: process.cwd()

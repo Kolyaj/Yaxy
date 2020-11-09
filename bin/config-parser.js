@@ -1,6 +1,5 @@
 var Parser = require('lblr-parser');
 var {promisify} = require('util');
-var Q = require('q');
 
 exports.parse = function(server, fname) {
     var parser = Parser(true);

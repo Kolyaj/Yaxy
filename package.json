@@ -14,8 +14,7 @@
         "url": "git://github.com/Kolyaj/Yaxy.git"
     },
     "dependencies": {
-        "lblr-parser": "^0.1.0",
-        "q": "^1.4.1"
+        "lblr-parser": "^0.1.0"
     },
     "bin": "index.js",
     "devDependencies": {
