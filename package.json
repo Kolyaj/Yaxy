@@ -14,12 +14,13 @@
         "url": "git://github.com/Kolyaj/Yaxy.git"
     },
     "dependencies": {
-        "lblr-parser": "^0.1.0"
+        "lblr-parser": "^0.1.0",
+        "websocket-driver": "^0.7.4"
     },
     "bin": "index.js",
     "devDependencies": {
         "mocha": "^2.2.5",
-        "phantomjs": "^1.9.17"
+        "phantomjs": "^1.9.20"
     },
     "scripts": {
         "test": "mocha"
